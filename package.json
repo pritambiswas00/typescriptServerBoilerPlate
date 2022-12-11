@@ -2,7 +2,7 @@
   "name": "typescriptserver",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "DataStructure.js",
   "scripts": {
     "dev": "nodemon",
     "build": "rimraf dist && tsc",

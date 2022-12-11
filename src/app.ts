@@ -1,16 +1,5 @@
-import express, { Express, Request, Response } from 'express';
-const app = express();
+import { Address, CreateUser } from "./BuilderPattern"
 
-const port:number = Number(process.env.PORT) || 8080;
+const newUser = new CreateUser("Pritam").setAddress(new Address(560038, "Bangalore")).setEmail("pritambiswas060@gmail.com").setPhoneNumber("8017393446").build();
 
-async function bootStrap(appModule:Express, port:number) {
-      appModule.get("/", (req:Request, res:Response) => {
-             res.send("Server is working fine")
-      })
-
-      appModule.listen(port, ()=> {
-           console.log("app is started");
-      })
-}
-
-bootStrap(app, port);
+console.log(newUser)
