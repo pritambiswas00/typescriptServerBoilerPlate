@@ -8,7 +8,7 @@
 // import { forEach, isLength, remove, result, sum, takeRightWhile, toPlainObject, words } from 'lodash';
 // import fetch from 'node-fetch';
 
-import { create, flowRight, List, max, random, result, reverse, sortBy, split } from "lodash";
+import { create, flowRight, forEach, List, max, random, result, reverse, sortBy, split } from "lodash";
 import { interval } from "rxjs";
 
 // // class Person extends EventEmitter{
@@ -3097,6 +3097,135 @@ const findSubsequences = function(nums:number[]) {
 };
 
 console.log(findSubsequences([4,6,7,7]))
+
+function leafSimilar(root1: TreeNode | null, root2: TreeNode | null): boolean {
+     let root1List:number[]=[];
+     let root2List:number[]=[];
+     function recursion(node:TreeNode|null, arr:number[]):void {
+            if(node===null) return;
+            if(node&&node.left==null&&node.right==null) {
+                  arr.push(node.val);
+            }
+            recursion(node.left, arr);
+            recursion(node.right, arr);
+     }
+     recursion(root1, root1List);
+     recursion(root2, root2List);
+     let i=0,j=0;
+     root1List.sort((a:number,b:number)=>a-b);
+     root2List.sort((a:number,b:number)=>a-b);
+     while(i<root1List.length||j<root2List.length){
+           if(root1List[i]===root2List[j]) continue;
+           else return false;
+     }
+     return true;
+};
+
+
+function generateTrees(n: number): Array<TreeNode | null> {
+     function helper(index:number, limit:number):Array<TreeNode|null>{
+         if(index===limit) return [new TreeNode(index)];
+         else {
+            let temp:Array<TreeNode|null>=[];
+            for(let i=index;i<limit+1;i++){
+                 let left = i!==index ? helper(index, i-1): [null];
+                 let right = i!= limit ? helper(i+1, limit):[null];
+                 for(let leftTree of left){
+                     for(let rightTree of right){
+                        let node = new TreeNode(i);
+                        node.left = leftTree;
+                        node.right = rightTree;
+                        temp.push(node); 
+                     }
+                 }
+            }
+            return temp;
+         }
+     }
+     return helper(1,n);
+};
+
+function maxAncestorDiff(root: TreeNode | null): number {
+      if(root===null) return 0;
+      function getMaximumDiff(x:number,a:number,b:number):number{
+         return Math.max(Math.abs(x-a), Math.abs(x-b)); 
+      }
+      function recursion(current:TreeNode|null, prevMin:number, prevMax:number):number{
+          if(!current) return 0;
+          const results = getMaximumDiff(current.val, prevMin, prevMax);
+          const min = Math.min(prevMin, current.val);
+          const max = Math.max(prevMax, current.val);
+          return Math.max(
+             results,
+             recursion(current.left, min,max),
+             recursion(current.right, min,max)
+          )
+      }
+     return Math.max(
+        recursion(root.left, root.val, root.val),
+        recursion(root.right, root.val, root.val)
+     );
+};
+const nodeValue = new TreeNode(1);
+nodeValue.left = new TreeNode(2);
+nodeValue.right = new TreeNode(3);
+console.log(maxAncestorDiff(nodeValue));
+
+
+function maxProductQuestion(root:TreeNode|null):number{
+     let subTrees:number[]=[];
+     let maxValue:number = 0;
+     const DFS = (node:TreeNode|null)=>{
+         if(node===null) return 0;
+         if(node.left===null&&node.right===null) return node.val;
+         const sumLeft = DFS(node.left) as number;
+         const sumRight = DFS(node.right) as number;
+         subTrees.push(sumLeft,sumRight);
+         return sumLeft + sumRight+node.val;
+     }
+     const totalSum = DFS(root);
+     for(let subTree of subTrees) {
+          maxValue = Math.max(maxValue, subTree * (totalSum-subTree));
+     }
+     return maxValue % (Math.pow(10,9)+7);
+}
+
+function maxProfit(prices: number[]): number {
+      let results:number=0;
+       
+
+      return results;
+};
+
+// console.log(maxProfit([1,2,3,4,5]));
+
+function thirdMax(nums:number[]):number{
+    nums.sort((a:number,b:number)=>a-b);
+    let results:number[]=[];
+    let hashMap:{[key:string]:boolean}={};
+    for(let i=0;i<nums.length;i++){
+         if(!hashMap[nums[i]]){
+             hashMap[nums[i]]=true
+             results.push(nums[i]);
+         }
+    };
+    if(results.length<3) return results[results.length-1];
+    else return results[results.length-3];
+}
+
+function findDisappearedNumbers(nums: number[]): number[] {
+   nums.sort((a:number,b:number)=>a-b);
+   let hashMap:{[key:string]:number}={};
+   for(let i=1;i<=nums[nums.length-1];i++){
+       if(!hashMap[i]){
+           hashMap[i]++;
+       }
+   }
+   console.log(hashMap, "HashMap")
+   console.log(Object.entries(hashMap).filter(([key,value], index)=>(index+1)!==Number(key)));
+   return []
+};
+console.log(findDisappearedNumbers([4,3,2,7,8,2,3,1]))
 
 
 
