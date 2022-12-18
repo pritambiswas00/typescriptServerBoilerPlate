@@ -8,7 +8,8 @@
 // import { forEach, isLength, remove, result, sum, takeRightWhile, toPlainObject, words } from 'lodash';
 // import fetch from 'node-fetch';
 
-import { create, flowRight, forEach, List, max, random, result, reverse, sortBy, split } from "lodash";
+import e from "express";
+import { create, flowRight, forEach, List, max, memoize, random, result, reverse, sortBy, split } from "lodash";
 import { interval } from "rxjs";
 
 // // class Person extends EventEmitter{
@@ -3214,18 +3215,288 @@ function thirdMax(nums:number[]):number{
 }
 
 function findDisappearedNumbers(nums: number[]): number[] {
-   nums.sort((a:number,b:number)=>a-b);
-   let hashMap:{[key:string]:number}={};
-   for(let i=1;i<=nums[nums.length-1];i++){
-       if(!hashMap[i]){
-           hashMap[i]++;
-       }
-   }
-   console.log(hashMap, "HashMap")
-   console.log(Object.entries(hashMap).filter(([key,value], index)=>(index+1)!==Number(key)));
-   return []
+    let i=0;
+    let results:number[]=[];
+    while (i<nums.length) {
+        let j=nums[i]-1;
+        if(nums[i]!==nums[j]){
+             [nums[i],nums[j]]=[nums[j],nums[i]];
+        }else i++;
+    }
+    for(let i=0; i<nums.length; i++){
+          if(nums[i]!==i+1){
+             results.push(i+1);
+          }
+    }
+    return results;
 };
 console.log(findDisappearedNumbers([4,3,2,7,8,2,3,1]))
+
+
+function sortArray(arr:number[]):number[]{
+     if(arr.length===1) return arr;
+     const center = Math.floor(arr.length/2);
+     const left = arr.slice(0, center);
+     const right = arr.slice(center);
+     function merge(left:number[],right:number[]):number[]{
+            let results:number[]=[];
+            while(left.length&&right.length){
+                 if(left[0]<right[0]) results.push(left.shift() as number);
+                 else results.push(right.shift() as number);
+            }
+            return [...results, ...left, ...right]
+     }
+     return merge(sortArray(left), sortArray(right));
+}
+
+
+function sortList(head: ListNode | null): ListNode | null {
+    if(head===null||head.next==null) return head;
+    let tempArr:number[]=[];
+    let currentNode:ListNode|null = head;
+    while(currentNode!==null){
+         tempArr.push(currentNode.val);
+         currentNode = currentNode.next;
+    }
+    tempArr.sort((a:number,b:number)=>a-b);
+    const newHead = new ListNode(tempArr[0]);
+    currentNode = newHead;
+    for(let i=1;i<tempArr.length;i++){
+        currentNode.next = new ListNode(tempArr[i]);
+        currentNode=currentNode.next;
+    }
+    return newHead;
+};
+
+function climbStairs(n:number, memo:Record<number,number>={}):number{
+     if(memo.hasOwnProperty(n)) return memo[n];
+     if(n===0) return 1;
+     if(n<0) return 0;
+     memo[n]=climbStairs(n-1, memo)+ climbStairs(n-2, memo);
+     return memo[n];
+}
+
+function minimumFallingPathSum(matrix:number[][]):number{
+      const row:number=matrix.length;
+      let minRow:number[]=matrix[0];
+      for(let i=1;i<row;i++){
+          const currentRow = matrix[i];
+          minRow = currentRow.map((item,index)=>{
+               return Math.min(
+                   minRow[index],
+                   minRow[index+1] ?? Number.MAX_SAFE_INTEGER,
+                   minRow[index-1] ?? Number.MAX_SAFE_INTEGER
+               )+item;
+          })
+      }
+    return Math.min(...minRow);
+}
+
+function checkRecord(s: string): boolean {
+     let absent = 0;
+     if(s.includes("LLL")) return false;
+     for(let i=0;i<s.length;i++) {
+        if(s[i]==="A") absent++;
+
+     }
+     return absent<2.
+};
+
+console.log(checkRecord("PPALLP"))
+
+/////Sliding window Technique ------------------------
+//https://www.youtube.com/watch?v=MK-NZ4hN7rs
+
+function findMaxAverage(nums: number[], k: number): number {
+     let currentSum:number =0;
+     let maximumAvg:number = Number.MIN_SAFE_INTEGER;
+     for(let i=0;i<nums.length;i++){
+           currentSum+=nums[i];
+           if(i>=k-1){
+               maximumAvg = Math.max(currentSum/k, maximumAvg);
+               currentSum-=nums[i-(k-1)];
+           }
+     }
+     return maximumAvg;
+};
+
+console.log(findMaxAverage([1,12,-5,-6,50,3], 4));
+
+function longestCommonSubsequence(text1: string, text2: string): number {
+    let dp:number[][]=[];
+    const text1Size:number=text1.length, text2Size:number = text2.length;
+    for(let i=0;i<=text1Size;i++){
+         dp[i]=[];
+         for(let j=0;j<=text2Size;j++){
+            dp[i][j]=0;
+         }
+    }
+    for(let k=1;k<=text1Size;k++){
+        for(let j=1;j<=text2Size;j++){
+            if(text1[k-1]===text2[j-1]){
+                dp[k][j]=dp[k-1][j-1] + 1;
+            }else{
+                dp[k][j]=Math.max(dp[k-1][j],dp[k][j-1])
+            }
+        }
+    }
+    return dp[text1Size][text2Size];
+};
+
+console.log(longestCommonSubsequence('ezupkr', "ubmrapg"))
+
+function evalRPN(tokens: string[]): number {
+    interface ISets {
+        [key:string]:(a:number,b:number)=>number;
+    }
+    const operatorSets:ISets = {
+        '+':(a:number,b:number)=>a+b,
+        '-':(a:number,b:number)=>a-b,
+        '/':(a:number,b:number)=>a/b|0,
+        '*':(a:number,b:number)=>a*b
+    }
+    let stack:number[]=[];
+    tokens.forEach(item=>{
+         if(operatorSets[item]){
+            const a = stack.pop() as number;
+            const b = stack.pop() as number;
+            stack.push(operatorSets[item](a,b));
+         }else{
+            stack.push(Number(item));
+         }
+    })
+    return stack.pop() as number;
+};
+
+console.log(evalRPN(["2","1","+","3","*"]));
+
+function repeatedSubstringPattern(s: string): boolean {
+    return (s+s).slice(1, (s.length*2)-1).indexOf(s)!==-1;
+};
+
+console.log(repeatedSubstringPattern("abab"));
+
+function strStr(haystack: string, needle: string): number {
+     const rree= haystack.indexOf(needle);
+     return  haystack.indexOf(needle);
+};
+
+console.log(strStr("sadbutsad", "sad"))
+function findSubstringInWraproundString(p: string): number {
+      
+      const dp = new Array<number>(26).fill(0);
+      const origin = 'a'.charCodeAt(0);
+      let count:number=0;
+      for(let i=0;i<p.length;i++){
+           const code = p.charCodeAt(i);
+           const preCode = p.charCodeAt(i-1);
+           const pos = code-preCode;
+           count = code-preCode===1 || preCode-code===25 ? count+1:1;
+           dp[pos]=Math.max(count, dp[pos]);
+      }
+      return dp.reduce((total, count)=>total+count);
+};
+
+console.log(findSubstringInWraproundString("zab"));
+
+function dailyTemperatures(temperatures: number[]): number[] {
+    let next:number[]= new Array(temperatures.length).fill(0);
+    const stack:number[]=[];
+    for(let i=0;i<temperatures.length;i++){
+        let currentTemp = temperatures[i];
+        while(stack && temperatures[stack[stack.length-1]]<currentTemp){
+             let top = stack.pop() as number;
+             next[top]=i-top;
+        }
+        stack.push(i);
+    }
+
+    return next;
+}
+
+function nextGreaterElement(nums1: number[], nums2: number[]): number[] {
+      let results:number[]=[];
+      function returnNextElement(num:number):number{ 
+            let nextElement = nums2[nums2.indexOf(num)+1]
+            if(nextElement) {
+                 if(nextElement>num) return nextElement;
+                 else return -1;
+            }else return -1;
+      }
+
+      for(let i=0;i<nums1.length;i++){
+        const idx = returnNextElement(nums1[i])
+               results.push(idx);
+      }
+      return results;
+};
+
+console.log(nextGreaterElement([4,1,2],[1,3,4,2]))
+
+function licenseKeyFormatting(s: string, k: number): string {
+    let reformattedLicenseKey = '';
+    let tmpFormattedString:string = "";
+    for(let i=0;i<s.length;i++){
+         if(s[i]!=="-"){
+             tmpFormattedString+=s[i]
+         }
+    }
+    const lenFirstGroup = (tmpFormattedString.length % k) === 0 ? k: tmpFormattedString.length % k;
+    
+    
+    reformattedLicenseKey = tmpFormattedString.substring(0, lenFirstGroup) 
+    
+    for(let index=lenFirstGroup; index<tmpFormattedString.length; index+=k)
+        {
+            reformattedLicenseKey += '-'+ tmpFormattedString.substring(index, index+k) ;
+        }
+    return  reformattedLicenseKey;
+};
+
+console.log(licenseKeyFormatting("2-5g-3-J", 2))
+
+
+class Graph {
+      public adjecencyList:Record<string,string[]>;
+      constructor(){
+         this.adjecencyList ={};
+      }
+
+      public addVertex(value:string):void{
+         this.adjecencyList[value]=[];
+      }
+
+      public addEdge(vertex1:string,vertex2:string):void{
+             this.adjecencyList[vertex1].push(vertex2);
+             this.adjecencyList[vertex2].push(vertex1);
+      }
+
+      public removeEdge(vertex1:string, vertex2:string):void{
+            this.adjecencyList[vertex1] = this.adjecencyList[vertex1].filter(item=>item!==vertex2);
+            this.adjecencyList[vertex2] = this.adjecencyList[vertex2].filter(item=>item!==vertex1);
+      }
+
+      public removeVertex(vertex:string):void{
+           for(let key in this.adjecencyList){
+                 this.adjecencyList[key]=this.adjecencyList[key].filter(item=>item!==vertex);
+           }
+           delete this.adjecencyList[vertex];
+      }
+}
+
+
+const myGraph = new Graph();
+myGraph.addVertex("Mumbai");
+myGraph.addVertex("Kolkata");
+myGraph.addVertex("Bangalore");
+myGraph.addEdge("Mumbai", "Kolkata");
+myGraph.addEdge("Mumbai", "Bangalore");
+myGraph.addEdge("Bangalore", "Kolkata");
+myGraph.addEdge("Kolkata", "Mumbai");
+myGraph.removeEdge("Kolkata", "Mumbai");
+myGraph.removeVertex("Kolkata")
+console.log(myGraph.adjecencyList)
+
 
 
 
